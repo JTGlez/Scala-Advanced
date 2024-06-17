@@ -55,4 +55,56 @@ object CurriesPAF extends App {
   println(add7_3_2)
   println(add7_4_2)
 
+  // Underscores are powerful!
+
+  // Example: They allow you to provide partial arguments to a function doing also an ETA-Expansion
+  def concatenator(a: String, b: String, c: String): String = a + b + c
+
+  val insertName = concatenator("Hello, I'm ", _: String, ", how are you?")
+  println(insertName("Yorch")) // x: String => concatenator(hello, x, howareyou).
+
+  val fillInTheBlanks = concatenator("Hello, ", _: String, _: String) // (x, y) => concatenator("Hello, ", x, y)
+
+  println(fillInTheBlanks("Daniel", " Scala is awesome!"))
+  // Useful to write general functions and use them for specific cases
+
+  // Ex 1. Process a list of numbers and return their string representation with different formats (%4.2f, %8.6f and %14.12f)
+  // with curried format.
+
+  def curriedFormatter(s: String)(number: Double): String = s.format(number)
+  val numbers = List(Math.PI, Math.E, 1, 9.8, 1.3e-12)
+
+  val simpleFormat = curriedFormatter("%4.2f")(_) // Lifting
+  val seriousFormat = curriedFormatter("%8.6f")(_)
+  val preciseFormat = curriedFormatter("%14.12f")(_)
+
+  println(numbers.map(simpleFormat))
+  println(numbers.map(seriousFormat))
+  println(numbers.map(preciseFormat))
+
+  println(numbers.map(curriedFormatter("%14.12f"))) // Compiler does ETA-Expansion automatically
+
+  // Ex 2. Difference between functions and lambdas, and parameters by name and 0-lambda.
+
+  def byName(n: => Int) = n + 1 // Name paremeters
+  def byFunction(f: () => Int) = f() + 1 // Function parameters
+
+  def method: Int = 42 // Wont allow ETA and will evaluate immediately to 42
+  def parenMethod(): Int = 42
+
+  byName(23) // Ok
+  byName(method) // Evaluates to 42
+  byName(parenMethod())
+  byName(parenMethod) // Ok but beware => buName(parenMethod())
+
+  // byName is using the evaluation of method and parenMethod, but its not using the function at all
+  // byName( () => 43 ) Bad!
+  byName( (() => 43)()  ) // But this is fine, as we are providing a definition and then executing the lambda
+  // byName(parenMethod _ ) Bad too!
+  // byFunction(45) Bad, we are expecting a lambda
+  // byFunction(method) Also is not ok, as a method is not a function and is actually evaluating to a single value.
+  byFunction(parenMethod) // This is ok, compiler does ETA-Expansion
+  byFunction( () => 42 ) // Ok!
+  byFunction(parenMethod _) // Also works, but the underscore is redundant
+
 }
